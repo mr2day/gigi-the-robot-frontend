@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 type Message = {
@@ -11,10 +11,43 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const socketRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  useEffect(() => {
+    const wsUrl =
+      process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
+
+    socketRef.current = new WebSocket(wsUrl);
+
+    socketRef.current.onmessage = (event) => {
+      if (event.data === '[END]') {
+        setLoading(false);
+        return;
+      }
+      if (event.data === '[ERROR]') {
+        setLoading(false);
+        alert('Error generating response.');
+        return;
+      }
+
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
+          content: updated[updated.length - 1].content + event.data,
+        };
+        return updated;
+      });
+    };
+
+    return () => {
+      socketRef.current?.close();
+    };
+  }, []);
+
+  const handleSend = () => {
+    if (!input.trim() || loading || !socketRef.current) return;
 
     const userMessage: Message = { role: 'user', content: input };
     const assistantMessage: Message = { role: 'assistant', content: '' };
@@ -23,31 +56,7 @@ export default function Home() {
     setInput('');
     setLoading(true);
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: userMessage.content }),
-    });
-
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder('utf-8');
-
-    while (true) {
-      const { value, done } = await reader!.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          ...updated[updated.length - 1],
-          content: updated[updated.length - 1].content + chunk,
-        };
-        return updated;
-      });
-    }
-
-    setLoading(false);
+    socketRef.current.send(input);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
