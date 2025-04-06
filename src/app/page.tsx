@@ -15,8 +15,8 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const wsUrl =
-      process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL as string;
+    console.log(`wsUrl = ${wsUrl}`);
 
     socketRef.current = new WebSocket(wsUrl);
 
