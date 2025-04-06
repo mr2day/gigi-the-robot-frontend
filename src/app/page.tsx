@@ -18,6 +18,17 @@ export default function Home() {
 
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
 
+  // Update viewport height CSS variable for mobile responsiveness
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    setVh();
+    window.addEventListener('resize', setVh);
+    return () => window.removeEventListener('resize', setVh);
+  }, []);
+
   const connectSocket = () => {
     console.log(`Connecting to WebSocket: ${wsUrl}`);
     const socket = new WebSocket(wsUrl);
@@ -89,12 +100,9 @@ export default function Home() {
     socketRef.current.send(input);
   };
 
-  // Remove the send-on-enter behavior.
-  // The default behavior of the textarea is now preserved,
-  // allowing users to add a new line when pressing Enter.
+  // Allow the default behavior (adding a newline) when pressing Enter.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Optionally, you can implement alternative shortcuts (e.g. Ctrl+Enter to send)
-    // if needed.
+    // Optionally, you can add a shortcut such as Ctrl+Enter to send
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -109,7 +117,10 @@ export default function Home() {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#343541] text-white">
+    <div 
+      className="flex flex-col bg-[#343541] text-white"
+      style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
+    >
       <div
         ref={containerRef}
         className="flex-1 overflow-y-auto scroll-smooth px-4 pt-10 pb-32"
