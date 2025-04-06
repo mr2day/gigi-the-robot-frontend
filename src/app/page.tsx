@@ -13,14 +13,20 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL as string;
-    console.log(`wsUrl = ${wsUrl}`);
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
 
-    socketRef.current = new WebSocket(wsUrl);
+  const connectSocket = () => {
+    console.log(`Connecting to WebSocket: ${wsUrl}`);
+    const socket = new WebSocket(wsUrl);
+    socketRef.current = socket;
 
-    socketRef.current.onmessage = (event) => {
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    socket.onmessage = (event) => {
       if (event.data === '[END]') {
         setLoading(false);
         return;
@@ -41,13 +47,31 @@ export default function Home() {
       });
     };
 
+    socket.onclose = () => {
+      console.warn('WebSocket closed. Reconnecting in 2 seconds...');
+      reconnectTimeoutRef.current = setTimeout(connectSocket, 2000);
+    };
+
+    socket.onerror = (err) => {
+      console.error('WebSocket error:', err);
+      socket.close();
+    };
+  };
+
+  useEffect(() => {
+    connectSocket();
     return () => {
       socketRef.current?.close();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };
   }, []);
 
   const handleSend = () => {
     if (!input.trim() || loading || !socketRef.current) return;
+    if (socketRef.current.readyState !== WebSocket.OPEN) {
+      alert('WebSocket is not connected. Please wait...');
+      return;
+    }
 
     const userMessage: Message = { role: 'user', content: input };
     const assistantMessage: Message = { role: 'assistant', content: '' };
