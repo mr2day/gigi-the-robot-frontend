@@ -29,54 +29,55 @@ export default function Home() {
     return () => window.removeEventListener('resize', setVh);
   }, []);
 
-  const connectSocket = () => {
-    console.log(`Connecting to WebSocket: ${wsUrl}`);
-    const socket = new WebSocket(wsUrl);
-    socketRef.current = socket;
-
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-    };
-
-    socket.onmessage = (event) => {
-      if (event.data === '[END]') {
-        setLoading(false);
-        return;
-      }
-      if (event.data === '[ERROR]') {
-        setLoading(false);
-        alert('Error generating response.');
-        return;
-      }
-
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          ...updated[updated.length - 1],
-          content: updated[updated.length - 1].content + event.data,
-        };
-        return updated;
-      });
-    };
-
-    socket.onclose = () => {
-      console.warn('WebSocket closed. Reconnecting in 2 seconds...');
-      reconnectTimeoutRef.current = setTimeout(connectSocket, 2000);
-    };
-
-    socket.onerror = (err) => {
-      console.error('WebSocket error:', err);
-      socket.close();
-    };
-  };
-
   useEffect(() => {
+    // Define connectSocket inside the useEffect to avoid dependency issues.
+    const connectSocket = () => {
+      console.log(`Connecting to WebSocket: ${wsUrl}`);
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      socket.onmessage = (event) => {
+        if (event.data === '[END]') {
+          setLoading(false);
+          return;
+        }
+        if (event.data === '[ERROR]') {
+          setLoading(false);
+          alert('Error generating response.');
+          return;
+        }
+
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            content: updated[updated.length - 1].content + event.data,
+          };
+          return updated;
+        });
+      };
+
+      socket.onclose = () => {
+        console.warn('WebSocket closed. Reconnecting in 2 seconds...');
+        reconnectTimeoutRef.current = setTimeout(connectSocket, 2000);
+      };
+
+      socket.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        socket.close();
+      };
+    };
+
     connectSocket();
     return () => {
       socketRef.current?.close();
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };
-  }, []);
+  }, [wsUrl]);
 
   const handleSend = () => {
     if (!input.trim() || loading || !socketRef.current) return;
@@ -100,14 +101,12 @@ export default function Home() {
     socketRef.current.send(input);
   };
 
-  // Allow the default behavior (adding a newline) when pressing Enter.
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Optionally, you can add a shortcut such as Ctrl+Enter to send
-  };
+  // Allow default behavior (e.g. newline) on keydown.
+  const handleKeyDown = () => {};
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // Auto-resize the textarea as the user types
+    // Auto-resize the textarea.
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
@@ -191,10 +190,13 @@ export default function Home() {
           justify-content: center;
           border-radius: 50%;
           position: relative;
-          transition: background-color 0.2s;
+          transition: background-color 0.2s, box-shadow 0.2s;
         }
         .send-button:hover {
           background-color: #c0c0c0;
+        }
+        .send-button:focus {
+          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.6);
         }
         .send-button::before {
           content: "";
