@@ -128,14 +128,21 @@ export default function Home() {
 
       <div className="bg-[#343541] border-t border-gray-700 p-4 sticky bottom-0 w-full">
         <div className="max-w-3xl mx-auto">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            placeholder="Send a message"
-            className="w-full resize-none min-h-[3rem] bg-[#40414f] text-white border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-white"
-          />
+          <div className="flex items-end gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={1}
+              placeholder="Send a message"
+              className="flex-grow resize-none min-h-[3rem] bg-[#40414f] text-white border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-white"
+            />
+            <button 
+              className="send-button"
+              onClick={handleSend}
+              aria-label="Send message"
+            ></button>
+          </div>
           {loading && (
             <div className="text-sm text-gray-400 mt-2 animate-pulse px-1">
               Generating response...
@@ -143,6 +150,35 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        .send-button {
+          background-color: #d3d3d3;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          width: 3rem;
+          height: 3rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          position: relative;
+          transition: background-color 0.2s;
+        }
+        .send-button:hover {
+          background-color: #c0c0c0;
+        }
+        .send-button::before {
+          content: "";
+          display: inline-block;
+          width: 0;
+          height: 0;
+          border-top: 6px solid transparent;
+          border-bottom: 6px solid transparent;
+          border-left: 8px solid black;
+        }
+      `}</style>
     </div>
   );
 }
