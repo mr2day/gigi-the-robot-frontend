@@ -14,6 +14,7 @@ export default function Home() {
   const socketRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
 
@@ -80,14 +81,27 @@ export default function Home() {
     setInput('');
     setLoading(true);
 
+    // Reset textarea height after sending
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
     socketRef.current.send(input);
   };
 
+  // Remove the send-on-enter behavior.
+  // The default behavior of the textarea is now preserved,
+  // allowing users to add a new line when pressing Enter.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    // Optionally, you can implement alternative shortcuts (e.g. Ctrl+Enter to send)
+    // if needed.
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    // Auto-resize the textarea
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
   useEffect(() => {
@@ -130,12 +144,14 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-end gap-2">
             <textarea
+              ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               rows={1}
               placeholder="Send a message"
               className="flex-grow resize-none min-h-[3rem] bg-[#40414f] text-white border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-white"
+              style={{ overflow: 'hidden' }}
             />
             <button 
               className="send-button"
