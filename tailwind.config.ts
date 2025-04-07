@@ -6,6 +6,22 @@ const config: Config = {
   theme: {
     extend: {
       typography: ({ theme }) => ({
+        DEFAULT: {
+          css: {
+            // Customize ordered lists
+            'ol': {
+              listStyleType: 'decimal',
+              marginLeft: '1.5rem',
+              paddingLeft: '1.5rem',
+            },
+            // Customize unordered lists
+            'ul': {
+              listStyleType: 'disc',
+              marginLeft: '1.5rem',
+              paddingLeft: '1.5rem',
+            },
+          },
+        },
         invert: {
           css: {
             color: theme('colors.gray.100'),
@@ -17,12 +33,23 @@ const config: Config = {
               padding: '2px 4px',
               borderRadius: '0.25rem',
             },
-            'h1,h2,h3,h4': { color: theme('colors.white') },
+            'h1, h2, h3, h4': { color: theme('colors.white') },
             th: { color: theme('colors.white') },
             td: { color: theme('colors.gray.200') },
             blockquote: {
               borderLeftColor: theme('colors.gray.600'),
               color: theme('colors.gray.100'),
+            },
+            // Also ensure list markers appear in dark mode:
+            'ol': {
+              listStyleType: 'decimal',
+              marginLeft: '1.5rem',
+              paddingLeft: '1.5rem',
+            },
+            'ul': {
+              listStyleType: 'disc',
+              marginLeft: '1.5rem',
+              paddingLeft: '1.5rem',
             },
           },
         },

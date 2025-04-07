@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -16,9 +15,11 @@ export default function Home() {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://api.gigi-the-robot.com';
+  const conversationUrl =
+    process.env.NEXT_PUBLIC_CONVERSATION_URL ||
+    'https://api.gigi-the-robot.com/conversation';
 
-  // Update viewport height CSS variable for mobile responsiveness
   useEffect(() => {
     const setVh = () => {
       const vh = window.innerHeight * 0.01;
@@ -30,21 +31,26 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Define connectSocket inside the useEffect to avoid dependency issues.
+    fetch(conversationUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error('Conversation not found');
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) setMessages(data);
+      })
+      .catch((err) => console.log('No previous conversation found:', err));
+  }, [conversationUrl]);
+
+  useEffect(() => {
     const connectSocket = () => {
-      console.log(`Connecting to WebSocket: ${wsUrl}`);
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 
-      socket.onopen = () => {
-        console.log('WebSocket connected');
-      };
+      socket.onopen = () => console.log('WebSocket connected');
 
       socket.onmessage = (event) => {
-        if (event.data === '[END]') {
-          setLoading(false);
-          return;
-        }
+        if (event.data === '[END]') return setLoading(false);
         if (event.data === '[ERROR]') {
           setLoading(false);
           alert('Error generating response.');
@@ -86,27 +92,26 @@ export default function Home() {
       return;
     }
 
-    const userMessage: Message = { role: 'user', content: input };
-    const assistantMessage: Message = { role: 'assistant', content: '' };
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: input },
+      { role: 'assistant', content: '' },
+    ]);
     setInput('');
     setLoading(true);
-
-    // Reset textarea height after sending
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
-
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     socketRef.current.send(input);
   };
 
-  // Allow default behavior (e.g. newline) on keydown.
-  const handleKeyDown = () => {};
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // Auto-resize the textarea.
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
@@ -116,7 +121,7 @@ export default function Home() {
   }, [messages]);
 
   return (
-    <div 
+    <div
       className="flex flex-col bg-[#343541] text-white"
       style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
     >
@@ -128,19 +133,22 @@ export default function Home() {
           <div className="w-full max-w-3xl space-y-6">
             {messages.map((msg, i) =>
               msg.role === 'assistant' && !msg.content.trim() ? null : (
-                <div key={i} className="flex flex-col gap-2 items-start">
-                  <div className="w-32 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold">
-                    {msg.role === 'user' ? 'You:' : 'Gigi the robot:'}
-                  </div>
+                <div key={i} className="relative flex flex-col gap-2 items-start">
+                  {msg.role === 'assistant' && (
+                    <img
+                      src="/gigi-icon.png"
+                      alt="Gigi the robot"
+                      className="w-7 h-5 absolute -top-7 z-10"
+                    />
+                  )}
                   <div
-                    className={`w-full rounded-xl px-4 py-3 ${
-                      msg.role === 'user'
-                        ? 'bg-[#2f3136] text-right'
-                        : 'bg-[#444654] text-left'
-                    }`}
+                    className={`rounded-xl px-4 py-3 text-left ${msg.role === 'user'
+                        ? 'bg-[#2f3136] self-end max-w-[60%]'
+                        : 'bg-[#444654] self-start w-full'
+                      }`}
                   >
-                    <div className="prose prose-invert max-w-none">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    <div style={{ whiteSpace: 'pre-wrap' }}>
+                      {msg.content}
                     </div>
                   </div>
                 </div>
@@ -163,7 +171,7 @@ export default function Home() {
               className="flex-grow resize-none min-h-[3rem] bg-[#40414f] text-white border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-white"
               style={{ overflow: 'hidden' }}
             />
-            <button 
+            <button
               className="send-button"
               onClick={handleSend}
               aria-label="Send message"
