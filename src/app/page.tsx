@@ -176,7 +176,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="py-8 -mx-2 sticky bottom-0 w-full">
+      <div className="py-8 px-3 lg:-mx-3 sticky bottom-0 w-full">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-4">
             <textarea
