@@ -15,6 +15,7 @@ const DisplayFormattedText: React.FC<Props> = ({ content }) => {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         code({ inline, className = "", children, ...props }: any) {
           const match = /language-(\w+)/.exec(className);
 
