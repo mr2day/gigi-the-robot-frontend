@@ -2,58 +2,33 @@ import type { Config } from 'tailwindcss';
 import typography from '@tailwindcss/typography';
 
 const config: Config = {
-  content: ['./app/**/*.{js,ts,jsx,tsx}', './src/**/*.{js,ts,jsx,tsx}'],
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
-      typography: ({ theme }) => ({
-        DEFAULT: {
-          css: {
-            // Customize ordered lists
-            'ol': {
-              listStyleType: 'decimal',
-              marginLeft: '1.5rem',
-              paddingLeft: '1.5rem',
-            },
-            // Customize unordered lists
-            'ul': {
-              listStyleType: 'disc',
-              marginLeft: '1.5rem',
-              paddingLeft: '1.5rem',
-            },
-          },
-        },
+      typography: {
         invert: {
           css: {
-            color: theme('colors.gray.100'),
-            a: { color: theme('colors.white') },
-            strong: { color: theme('colors.white') },
+            color: '#f8faff',
+            a: { color: '#8ab4f8' },
+            strong: { color: '#f8faff' },
+            'h1, h2, h3, h4': { color: '#f8faff' },
             code: {
-              backgroundColor: theme('colors.gray.800'),
-              color: theme('colors.white'),
-              padding: '2px 4px',
+              color: '#f8faff',
+              backgroundColor: '#1e1f22',
+              padding: '0.2em 0.4em',
               borderRadius: '0.25rem',
             },
-            'h1, h2, h3, h4': { color: theme('colors.white') },
-            th: { color: theme('colors.white') },
-            td: { color: theme('colors.gray.200') },
             blockquote: {
-              borderLeftColor: theme('colors.gray.600'),
-              color: theme('colors.gray.100'),
+              color: '#f8faff',
+              borderLeftColor: '#444',
+              borderLeftWidth: '2px', // <-- Make border thinner
             },
-            // Also ensure list markers appear in dark mode:
-            'ol': {
-              listStyleType: 'decimal',
-              marginLeft: '1.5rem',
-              paddingLeft: '1.5rem',
-            },
-            'ul': {
-              listStyleType: 'disc',
-              marginLeft: '1.5rem',
-              paddingLeft: '1.5rem',
-            },
+            hr: { borderColor: '#444', borderTopWidth: '1px' }, // <-- Thinner <hr>
+            'ul > li::marker': { color: '#888' },
+            'ol > li::marker': { color: '#888' },
           },
         },
-      }),
+      },
     },
   },
   plugins: [typography],
